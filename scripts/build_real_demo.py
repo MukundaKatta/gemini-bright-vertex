@@ -25,10 +25,27 @@ from PIL import Image, ImageDraw, ImageFont
 W, H = 1920, 1080
 FG = "#0f172a"
 FG_MUTED = "#475569"
-ACCENT = "#f59e0b"          # Bright Data amber
-ACCENT_2 = "#b45309"
+ACCENT = "#f59e0b"          # Bright Data amber  (Stage 1 — scrape)
+ACCENT_2 = "#4285f4"        # Google blue        (Stage 2 — Vertex AI Search)
+ACCENT_DEEP = "#b45309"     # Bright Data deep amber, for footer accents
 BG = "#ffffff"
 PANEL = "#f8fafc"
+
+
+def _draw_accent_gradient(d, x0, y0, x1, y1, steps=160):
+    """Render the Stage 1 -> Stage 2 amber-to-Google-blue accent bar."""
+    from PIL import ImageColor
+    a = ImageColor.getrgb(ACCENT)
+    b = ImageColor.getrgb(ACCENT_2)
+    width = (x1 - x0) / steps
+    for i in range(steps):
+        t = i / max(steps - 1, 1)
+        r = round(a[0] + (b[0] - a[0]) * t)
+        g = round(a[1] + (b[1] - a[1]) * t)
+        bl = round(a[2] + (b[2] - a[2]) * t)
+        sx = round(x0 + i * width)
+        ex = round(x0 + (i + 1) * width)
+        d.rectangle([(sx, y0), (ex, y1)], fill=(r, g, bl))
 
 SF = "/System/Library/Fonts/SFNS.ttf"
 SFI = "/System/Library/Fonts/SFNSItalic.ttf"
@@ -49,73 +66,82 @@ def draw_intro(img, d):
            "github.com/MukundaKatta/gemini-bright-vertex",
            font=font(22), fill=FG_MUTED)
     d.text((W - 270, H - 44), "Apache 2.0", font=font(22), fill=FG_MUTED)
-    d.text((96, 220), "gemini-bright-vertex", font=font(108), fill=FG)
-    d.rectangle([(96, 360), (340, 372)], fill=ACCENT)
-    d.text((96, 410),
-           "Plain-English research questions → SERP → unlock → cite,",
-           font=font(40), fill=FG_MUTED)
-    d.text((96, 470),
-           "with verbatim quotes straight from the live web.",
-           font=font(40), fill=FG_MUTED)
-    d.text((96, 600),
-           "Bright Data AI Agents Web Data Hackathon",
+    d.text((96, 200), "gemini-bright-vertex", font=font(108), fill=FG)
+    # Stage 1 (Bright Data amber) -> Stage 2 (Google blue) gradient bar.
+    _draw_accent_gradient(d, 96, 340, 700, 352)
+    d.text((96, 390),
+           "STAGE 1: Bright Data scrape  →  STAGE 2: Vertex AI Search index",
+           font=font(34), fill=FG)
+    d.text((96, 440),
+           "→  STAGE 3: synthesized answer with verbatim quotes.",
+           font=font(34), fill=FG_MUTED)
+    d.text((96, 560),
+           "Bright Data Web Data UNLOCKED Hackathon",
            font=font(32), fill=FG)
-    d.text((96, 645),
-           "· lablab.ai · May 25 to 31, 2026 ·",
-           font=font(32), fill=FG_MUTED)
-    d.text((96, 760),
+    d.text((96, 605),
+           "· lablab.ai · Track 2: Intelligence Synthesis ·",
+           font=font(30), fill=FG_MUTED)
+    d.text((96, 650),
+           "· May 25 to 31, 2026 ·",
+           font=font(30), fill=FG_MUTED)
+    d.text((96, 780),
            "What follows is real footage of the deployed",
            font=font(28, italic=True), fill=FG_MUTED)
-    d.text((96, 800),
-           "Cloud Run dashboard answering a live question.",
+    d.text((96, 820),
+           "Cloud Run dashboard answering a live two-stage question.",
            font=font(28, italic=True), fill=FG_MUTED)
 
 
 def draw_outro(img, d):
     d.rectangle([(0, 0), (W, H)], fill=BG)
-    d.text((96, 180), "gemini-bright-vertex", font=font(72), fill=FG)
-    d.rectangle([(96, 280), (340, 292)], fill=ACCENT)
-    d.text((96, 330),
+    d.text((96, 160), "gemini-bright-vertex", font=font(72), fill=FG)
+    _draw_accent_gradient(d, 96, 270, 700, 282)
+    d.text((96, 320),
            "github.com/MukundaKatta/gemini-bright-vertex",
-           font=font(30, mono=True), fill=ACCENT_2)
-    d.text((96, 410),
+           font=font(30, mono=True), fill=ACCENT_DEEP)
+    d.text((96, 400),
            "gemini-bright-vertex-1029931682737.us-central1.run.app",
            font=font(28, mono=True), fill=ACCENT_2)
-    d.text((96, 540),
-           "Google Cloud Agent Builder (ADK)",
-           font=font(32), fill=FG_MUTED)
-    d.text((96, 590),
-           "+ Gemini 2.5 Flash on Vertex AI",
-           font=font(32), fill=FG_MUTED)
-    d.text((96, 640),
-           "+ Bright Data MCP (SERP, Web Unlocker, datasets)",
-           font=font(32), fill=FG_MUTED)
-    d.text((96, 760),
-           "Quotes in this demo are copied byte-for-byte from",
-           font=font(26, italic=True), fill=FG_MUTED)
+    d.text((96, 510),
+           "STAGE 1  Bright Data MCP (SERP / Web Unlocker / extract / dataset)",
+           font=font(28), fill=ACCENT_DEEP)
+    d.text((96, 555),
+           "STAGE 2  Vertex AI Search (Discovery Engine + GenAI App Builder)",
+           font=font(28), fill=ACCENT_2)
+    d.text((96, 600),
+           "STAGE 3  vertex_search → synthesized answer with verbatim quotes",
+           font=font(28), fill=FG)
+    d.text((96, 700),
+           "Google Cloud Agent Builder (ADK) + Gemini 2.5 Flash on Vertex AI",
+           font=font(28), fill=FG_MUTED)
     d.text((96, 800),
-           "the unlocked source pages. No paraphrasing.",
+           "Every quote is copied byte-for-byte from the indexed corpus.",
            font=font(26, italic=True), fill=FG_MUTED)
-    d.text((96, 870),
+    d.text((96, 840),
+           "No paraphrasing. Track 2: Intelligence Synthesis.",
+           font=font(26, italic=True), fill=FG_MUTED)
+    d.text((96, 910),
            "Apache 2.0. Mukunda Katta, independent.",
            font=font(28, italic=True), fill=FG_MUTED)
 
 
 INTRO_NARRATION = (
-    "Gemini bright agent. A web research agent on Google Cloud Agent "
-    "Builder, wired to the Bright Data M C P server. Submission for the "
-    "Bright Data A I Agents Web Data Hackathon on lablab dot a i. What "
-    "follows is real footage of the deployed Cloud Run dashboard walking "
-    "the Bright Data tools and citing verbatim quotes from the live web."
+    "Bright Data plus Vertex A I Search. Track Two, Intelligence "
+    "Synthesis. A two stage research agent. Stage one scrapes the live "
+    "web through the Bright Data M C P server. Stage two indexes every "
+    "scraped page into a Vertex A I Search corpus. Stage three answers "
+    "the user's question from the indexed corpus with verbatim quotes. "
+    "What follows is real footage of the deployed Cloud Run dashboard."
 )
 
 
 OUTRO_NARRATION = (
-    "Every quote you just saw was copied byte for byte from the unlocked "
-    "Anthropic page. The agent never paraphrases. Built on the A D K with "
-    "Gemini two point five Flash, wired to the Bright Data M C P server, "
-    "S E R P, Web Unlocker, and structured datasets. Apache two point zero. "
-    "Thank you."
+    "Bright Data plus Vertex A I Search. Track Two, Intelligence "
+    "Synthesis. Stage one unlocked the live web. Stage two turned it "
+    "into a durable, queryable corpus on Vertex A I Search. Stage three "
+    "synthesized the final answer with quotes copied byte for byte from "
+    "the indexed corpus. Built on the A D K with Gemini two point five "
+    "Flash. Apache two point zero. Thank you."
 )
 
 

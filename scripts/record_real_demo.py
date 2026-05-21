@@ -45,7 +45,13 @@ def main() -> int:
         time.sleep(2)
 
         # Make sure the sidebar question is what the demo narrates.
-        question = "Anthropic Claude latest release notes 2026"
+        question = (
+            "Summarize the Anthropic Claude 4.7 API changes from announcements in May 2026. "
+            "STAGE 1 search_engine 'Anthropic Claude 4.7 release notes' + scrape_page top 3 anthropic.com. "
+            "STAGE 2 index_doc each scraped page into Vertex AI Search "
+            "(doc_claude_47_release, doc_anthropic_changelog, doc_prompt_caching). "
+            "STAGE 3 vertex_search 'summarize the API changes' top_k=3."
+        )
         # The Streamlit textarea is the first textarea on the page.
         textareas = page.locator("textarea")
         if textareas.count() > 0:
@@ -53,15 +59,15 @@ def main() -> int:
             print(f"    question set: {question[:60]}...")
             time.sleep(1.5)
 
-        # Click "Run research" — Streamlit's buttons have a wrapping kind=primary.
-        print("[3/4] clicking Run research and waiting for the agent response...")
-        page.locator("button", has_text="Run research").first.click()
+        # Click "Run two-stage research" — Streamlit primary button.
+        print("[3/4] clicking Run two-stage research and waiting for the agent response...")
+        page.locator("button", has_text="Run two-stage research").first.click()
         # Wait for the spinner to disappear (means the agent finished).
-        # Streamlit shows "Running Vertex AI Gemini..." while busy.
-        page.wait_for_selector("text=Running Vertex AI", timeout=120_000)
+        # Streamlit shows "Running two-stage agent on Vertex AI Gemini..." while busy.
+        page.wait_for_selector("text=Running two-stage", timeout=120_000)
         print("    agent started running")
         # Now wait for that text to go away (agent done).
-        page.wait_for_selector("text=Running Vertex AI", state="detached", timeout=300_000)
+        page.wait_for_selector("text=Running two-stage", state="detached", timeout=300_000)
         print("    agent finished")
         # Wait for the final NEXT STEP label to confirm full render.
         try:
