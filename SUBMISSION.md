@@ -15,50 +15,70 @@ Event: https://lablab.ai/ai-hackathons/brightdata-ai-agents-web-data-hackathon
 
 **Short Description** (one sentence)
 
-    A Gemini 2.5 research analyst that walks Bright Data's MCP tools (SERP +
-    Web Unlocker + structured datasets) to answer plain-English research
-    questions with verbatim quotes and a confidence note.
+    A two-stage Gemini 2.5 research agent for Track 2 Intelligence
+    Synthesis: scrape with Bright Data MCP, index into Vertex AI Search,
+    then synthesize answers with verbatim quotes from the indexed corpus.
 
 **Long Description**
 
-    gemini-bright-vertex treats every research question as a SERP → unlock →
-    cite loop. Ask "Anthropic Claude latest release notes 2026" and the agent
-    walks the Bright Data MCP tools:
+    gemini-bright-vertex splits research into three stages so the scraped
+    corpus becomes durable, queryable knowledge rather than a one-shot
+    answer:
 
-    1. search_engine(query, engine) — pulls the top SERP results.
-    2. Pick the most authoritative source (prefer first-party).
-    3. scrape_page(url) — fetch the rendered page through the Web Unlocker
-       (anti-bot bypass, returns unlocked_by_brightdata: true).
-    4. extract_text(url, css_selector) — clean text for citation.
-    5. web_data_lookup(dataset, key) — if the question touches a structured
-       record (company / profile / product), pull the canonical dataset row.
+    STAGE 1 — Scrape (Bright Data MCP).
+      1. search_engine(query, engine) — SERP API pulls top first-party
+         results.
+      2. scrape_page(url) — Web Unlocker fetches the rendered page
+         (anti-bot bypass, returns unlocked_by_brightdata: true).
+      3. extract_text(url, css_selector) — clean text per source.
+      4. web_data_lookup(dataset, key) — structured datasets (LinkedIn
+         companies, Amazon products, etc.).
+
+    STAGE 2 — Index (Vertex AI Search / Discovery Engine).
+      5. index_doc(doc_id, title, content, uri) — push every scraped page
+         into a Vertex AI Search data store.
+
+    STAGE 3 — Synthesize.
+      6. vertex_search(query, top_k=3) — re-query the indexed corpus and
+         answer with verbatim snippets, each tagged with its Bright Data
+         source URL plus the Vertex doc_id.
+
+    The Stage 2 split is what makes this a Track 2 (Intelligence
+    Synthesis) submission instead of a plain scraper: future research
+    questions hit the cached corpus first, only fetching new Bright Data
+    pages when the index doesn't already have the answer.
 
     The agent answers in 5 labeled sections:
 
-      ANSWER:     one or two sentences, every number/date/version copied
-                  verbatim from a tool result.
-      SOURCES:    bulleted list of the URLs the agent actually consulted.
-      KEY QUOTES: 2–4 verbatim quotes pulled from the scraped pages, each
-                  tagged with the source URL.
-      CONFIDENCE: high / medium / low, with a one-sentence reason tied to
-                  source quality and cross-source agreement.
-      NEXT STEP:  one concrete follow-up search.
+      ANSWER:     synthesized from vertex_search hits, every
+                  number/date/version verbatim from tools.
+      SOURCES:    bulleted Bright Data URLs each paired with their
+                  Vertex Search doc_id.
+      KEY QUOTES: 2-4 verbatim quotes pulled from vertex_search hits;
+                  the same string lives in scrape_page output too, so
+                  judges can audit byte-for-byte through both stages.
+      CONFIDENCE: high / medium / low, grounded in source quality plus
+                  cross-doc agreement plus the Bright Data unlock flag.
+      NEXT STEP:  one concrete follow-up vertex_search query against the
+                  same indexed corpus (no re-scrape needed).
 
-    Strict rule: every quantitative claim must come from a tool result. The
-    agent cites byte-for-byte; it never paraphrases inside KEY QUOTES, and
-    flags any page where unlocked_by_brightdata is false as a confidence
-    downgrade.
+    Strict rule: every quantitative claim must flow through both stages.
+    The two-stage contract is pinned by
+    test_scrape_index_search_chain_is_consistent.
 
     Built on Google Cloud Agent Builder (ADK) with Gemini 2.5 Flash on
-    Vertex AI, wired to Bright Data's MCP server. The repo ships a local
-    stub (canned SERPs + scraped pages, no Bright Data account required)
-    plus a one-env-var swap to the real @brightdata/mcp server.
+    Vertex AI, wired to Bright Data's MCP server and Vertex AI Search.
+    The repo ships a local stub (canned SERPs + scraped pages + in-memory
+    Discovery Engine, no Bright Data account or GCP project required)
+    plus two env-var swaps to the real @brightdata/mcp + real Discovery
+    Engine data store.
 
 **Technology & Category Tags**
 
-    python, gemini, gemini-2-5, vertex-ai, google-cloud-agent-builder,
-    agent-development-kit, mcp, model-context-protocol, bright-data,
-    bright-data-mcp, web-unlocker, serp-api, structured-datasets,
+    python, gemini, gemini-2-5, vertex-ai, vertex-ai-search,
+    discovery-engine, google-cloud-agent-builder, agent-development-kit,
+    mcp, model-context-protocol, bright-data, bright-data-mcp,
+    web-unlocker, serp-api, structured-datasets, intelligence-synthesis,
     streamlit, google-cloud-run, apache-2
 
 ## 📸 Cover Image and Presentation
